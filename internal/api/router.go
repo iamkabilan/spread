@@ -9,6 +9,7 @@ func Router() *mux.Router {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/upload", controller.UploadFile).Methods("POST")
+	router.HandleFunc("/register-node", controller.RegisterNode).Methods("POST")
 
 	return router
 }
