@@ -1,12 +1,14 @@
 package node
 
 import (
-	"database/sql"
 	"log"
+
+	"github.com/iamkabilan/spread/database"
 )
 
-func UpdateNodeStatus(db *sql.DB, nodeID string, status string) error {
-	query := `UPDATE storage_node SET status = ?, last_heartbeat = CURRENT_TIMESTAMP WHERE node_id = ?`
+func UpdateNodeStatus(nodeID string, status string) error {
+	db := database.GetDB()
+	query := `UPDATE storage_nodes SET status = ?, last_heartbeat = CURRENT_TIMESTAMP WHERE node_id = ?`
 
 	_, err := db.Exec(query, status, nodeID)
 	if err != nil {
