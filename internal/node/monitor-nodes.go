@@ -1,7 +1,6 @@
 package node
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -9,14 +8,15 @@ import (
 )
 
 func MonitorNodes() {
+	threshold := 30 * time.Second
 	for {
-		threshold := 30 * time.Second
+		log.Println("Monitoring Nodes ....")
 
 		db := database.GetDB()
-		query := "SELECT node_id FROM storage_node WHERE TIMESTAMPDIFF(SECOND, last_heartbeat, NOW()) > ? AND status = 'active'"
-		rows, queryErr := db.Query(query, int(threshold))
+		query := "SELECT node_id FROM storage_nodes WHERE TIMESTAMPDIFF(SECOND, last_heartbeat, NOW()) > ? AND status = 'active'"
+		rows, queryErr := db.Query(query, int(threshold.Seconds()))
 		if queryErr != nil {
-			fmt.Println("ERROR querying nodes: ", queryErr.Error())
+			log.Printf("ERROR querying nodes: %v", queryErr.Error())
 			continue
 		}
 		defer rows.Close()
@@ -28,7 +28,8 @@ func MonitorNodes() {
 				continue
 			}
 
-			err := UpdateNodeStatus(db, nodeID, "down")
+			err := UpdateNodeStatus(nodeID, "down")
+			log.Printf("Downing the node %s", nodeID)
 			if err != nil {
 				log.Printf("Error updating node %s to down: %v", nodeID, err)
 			}

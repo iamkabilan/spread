@@ -13,20 +13,19 @@ import (
 )
 
 func main() {
-	router := api.Router()
-
-	go node.MonitorNodes()
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("ERROR: ", err)
 	}
-
 	if err := database.Initialize(); err != nil {
 		fmt.Println(err)
 		return
 	}
 	defer database.GetDB().Close()
+
+	router := api.Router()
+
+	go node.MonitorNodes()
 
 	var API_PORT = os.Getenv("API_PORT")
 	log.Printf("Starting server on port %s", API_PORT)
