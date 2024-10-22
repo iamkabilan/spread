@@ -8,7 +8,7 @@ import (
 )
 
 func MonitorNodes() {
-	threshold := 30 * time.Second
+	threshold := 60 * time.Second
 	for {
 		log.Println("Monitoring Nodes ....")
 
@@ -35,6 +35,6 @@ func MonitorNodes() {
 			}
 		}
 
-		time.Sleep(15 * time.Second)
+		time.Sleep(30 * time.Second)
 	}
 }

@@ -19,7 +19,7 @@ func SaveFileMetadata(fileMetaData models.File) (int64, error) {
 
 	fileId, _ := result.LastInsertId()
 	fileMetaData.FileId = int(fileId)
-	log.Println("File inserted ", fileMetaData.FileId)
+	log.Println("New file inserted with the id", fileMetaData.FileId)
 
 	return fileId, nil
 }

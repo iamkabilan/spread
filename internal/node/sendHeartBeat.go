@@ -9,7 +9,7 @@ import (
 
 func SendHeartbeat(nodeID string) {
 	db := database.GetDB()
-	query := `UPDATE storage_nodes SET last_heartbeat = NOW() where node_id = ?`
+	query := `UPDATE storage_nodes SET last_heartbeat = NOW(), status = 'active' where node_id = ?`
 
 	for {
 		_, queryErr := db.Exec(query, nodeID)
@@ -19,6 +19,6 @@ func SendHeartbeat(nodeID string) {
 		}
 
 		log.Printf("Sending heartbeat from the node %s", nodeID)
-		time.Sleep(10 * time.Second)
+		time.Sleep(30 * time.Second)
 	}
 }
