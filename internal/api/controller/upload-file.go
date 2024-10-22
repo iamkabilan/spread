@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/iamkabilan/spread/internal/storage"
 )
@@ -25,7 +26,7 @@ func UploadFile(response http.ResponseWriter, request *http.Request) {
 	}
 	defer file.Close()
 
-	fmt.Printf("Uploaded file is %s", handler.Filename)
+	fmt.Printf("Uploaded file is %s \n", handler.Filename)
 
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
@@ -34,10 +35,19 @@ func UploadFile(response http.ResponseWriter, request *http.Request) {
 	}
 	log.Println("File bytes size is", len(fileBytes))
 
-	fileId, err := storage.StoreFile(fileBytes, handler.Filename, handler.Size)
-	if err != nil || fileId == 0 {
-		http.Error(response, "Couldn't able to store the file.", http.StatusInternalServerError)
-	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func(fileBytes []byte, filename string, size int64) {
+		defer wg.Done()
+
+		fileId, err := storage.StoreFile(fileBytes, filename, size)
+		if err != nil || fileId == 0 {
+			http.Error(response, "Couldn't able to store the file.", http.StatusInternalServerError)
+			return
+		}
+	}(fileBytes, handler.Filename, handler.Size)
+	wg.Wait()
 
 	fmt.Fprintf(response, "Uploaded file is %s \n", handler.Filename)
 }
