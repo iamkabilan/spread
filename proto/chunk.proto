@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package storage;
+
+option go_package = "github.com/iamkabilan/spread/internal/proto;proto";
+
+
+
+// Service for handling file chunks
+service ChunkService {
+    rpc StoreChunk(StoreChunkRequest) returns (StoreChunkResponse);
+    rpc GetChunk(GetChunkRequest) returns (GetChunkResponse);
+}
+
+message StoreChunkRequest {
+    string chunkId = 1;
+    bytes data = 2;
+    string fileId = 3;
+}
+
+message StoreChunkResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message GetChunkRequest {
+    string chunkId = 1;
+}
+
+message GetChunkResponse {
+    bytes data = 1;
+    string fileId = 2;
+}

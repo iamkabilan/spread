@@ -4,17 +4,24 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"sync"
+	"net"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/iamkabilan/spread/database"
 	"github.com/iamkabilan/spread/internal/metadata"
 	"github.com/iamkabilan/spread/internal/node"
+	pb "github.com/iamkabilan/spread/proto"
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
 )
 
+type ChunkServer struct {
+	pb.UnimplementedChunkServiceServer
+}
+
 func main() {
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("ERROR: ", err)
@@ -43,11 +50,26 @@ func main() {
 		node.UpdateNodeStatus(nodeID, "active")
 	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		node.SendHeartbeat(nodeID)
-	}()
+	lis, err := net.Listen("tcp", ":"+strconv.Itoa(*port))
+	if err != nil {
+		log.Fatalf("Failed to listen %v", err)
+	}
 
-	wg.Wait()
+	grpcServer := grpc.NewServer()
+	pb.RegisterChunkServiceServer(grpcServer, &ChunkServer{})
+
+	log.Printf("Node is listening on  port %d", *port)
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("Failed to serve %v", err)
+	}
+
+	node.SendHeartbeat(nodeID)
+
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	node.SendHeartbeat(nodeID)
+	// }()
+
+	// wg.Wait()
 }

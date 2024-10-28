@@ -71,8 +71,11 @@ func storeChunks(chunks map[int][]byte, fileID int64) bool {
 	return true
 }
 
+// func storeChunkOnNode() {
+// 	conn, err := grpc.NewClient()
+// }
+
 func StoreFile(fileBytes []byte, filename string, fileSize int64) (int64, error) {
-	log.Println("File size is -----------------", fileSize)
 	var file models.File
 	file = models.File{
 		UserId:   1,
