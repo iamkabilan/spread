@@ -21,7 +21,6 @@ type ChunkServer struct {
 }
 
 func main() {
-	// var wg sync.WaitGroup
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("ERROR: ", err)
@@ -50,6 +49,10 @@ func main() {
 		node.UpdateNodeStatus(nodeID, "active")
 	}
 
+	go func() {
+		node.SendHeartbeat(nodeID)
+	}()
+
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(*port))
 	if err != nil {
 		log.Fatalf("Failed to listen %v", err)
@@ -62,14 +65,4 @@ func main() {
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve %v", err)
 	}
-
-	node.SendHeartbeat(nodeID)
-
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	node.SendHeartbeat(nodeID)
-	// }()
-
-	// wg.Wait()
 }

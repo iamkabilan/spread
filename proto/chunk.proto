@@ -13,9 +13,9 @@ service ChunkService {
 }
 
 message StoreChunkRequest {
-    string chunkId = 1;
-    bytes data = 2;
-    string fileId = 3;
+    int64 chunkId = 1;
+    bytes chunk = 2;
+    int64 fileId = 3;
 }
 
 message StoreChunkResponse {
@@ -24,10 +24,10 @@ message StoreChunkResponse {
 }
 
 message GetChunkRequest {
-    string chunkId = 1;
+    int64 chunkId = 1;
 }
 
 message GetChunkResponse {
-    bytes data = 1;
-    string fileId = 2;
+    bytes chunk = 1;
+    int64 fileId = 2;
 }
