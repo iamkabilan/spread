@@ -1,14 +1,18 @@
 package storage
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/iamkabilan/spread/database"
 	"github.com/iamkabilan/spread/internal/metadata"
 	"github.com/iamkabilan/spread/models"
+	pb "github.com/iamkabilan/spread/proto"
+	"google.golang.org/grpc"
 )
 
 func createChunks(fileBytes []byte) map[int][]byte {
@@ -49,7 +53,7 @@ func storeChunks(chunks map[int][]byte, fileID int64) bool {
 		chunkHash := calculateChunkHash(chunk)
 
 		query := `INSERT INTO chunks (file_id, chunk_index, chunk_size, chunk_hash) VALUES (?, ?, ?, ?)`
-		_, queryErr := db.Exec(query, fileID, chunkIndex, chunkSize, chunkHash)
+		result, queryErr := db.Exec(query, fileID, chunkIndex, chunkSize, chunkHash)
 		if queryErr != nil {
 			log.Println("ERROR: ", queryErr.Error())
 
@@ -59,6 +63,10 @@ func storeChunks(chunks map[int][]byte, fileID int64) bool {
 			}
 			return false
 		}
+
+		chunkID, _ := result.LastInsertId()
+
+		storeChunkOnNode("", fileID, chunkID, chunk)
 
 		log.Printf("Chunk %d stored successfully.\n", chunkIndex)
 	}
@@ -71,9 +79,27 @@ func storeChunks(chunks map[int][]byte, fileID int64) bool {
 	return true
 }
 
-// func storeChunkOnNode() {
-// 	conn, err := grpc.NewClient()
-// }
+func storeChunkOnNode(nodeAddress string, fileID int64, chunkID int64, chunk []byte) {
+	conn, err := grpc.NewClient(nodeAddress)
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+	defer conn.Close()
+
+	client := pb.NewChunkServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	response, err := client.StoreChunk(ctx, &pb.StoreChunkRequest{
+		ChunkId: chunkID,
+		FileId:  fileID,
+		Chunk:   chunk,
+	})
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+	log.Printf(response.Message)
+}
 
 func StoreFile(fileBytes []byte, filename string, fileSize int64) (int64, error) {
 	var file models.File
