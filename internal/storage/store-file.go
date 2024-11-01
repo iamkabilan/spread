@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/iamkabilan/spread/database"
@@ -13,6 +14,7 @@ import (
 	"github.com/iamkabilan/spread/models"
 	pb "github.com/iamkabilan/spread/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func createChunks(fileBytes []byte) map[int][]byte {
@@ -42,11 +44,20 @@ func calculateChunkHash(chunk []byte) string {
 
 func storeChunks(chunks map[int][]byte, fileID int64) bool {
 	db := database.GetDB()
+
+	activeNodes, err := getActiveNodes(db)
+	if err != nil || len(activeNodes) == 0 {
+		log.Printf("Error: %v", err)
+		return false
+	}
+
 	tx, err := db.Begin()
 	if err != nil {
 		log.Println(err)
 		return false
 	}
+
+	nodeIndex := 0
 
 	for chunkIndex, chunk := range chunks {
 		chunkSize := len(chunk)
@@ -66,7 +77,15 @@ func storeChunks(chunks map[int][]byte, fileID int64) bool {
 
 		chunkID, _ := result.LastInsertId()
 
-		storeChunkOnNode("", fileID, chunkID, chunk)
+		selectedNode := activeNodes[nodeIndex]
+		nodeIndex = (nodeIndex + 1) % len(activeNodes)
+
+		nodeResult := storeChunkOnNode(":"+strconv.Itoa(selectedNode.Port), fileID, chunkID, chunk)
+		if nodeResult == false {
+			log.Printf("Couldn't able to store the chunk.")
+			tx.Rollback()
+			return false
+		}
 
 		log.Printf("Chunk %d stored successfully.\n", chunkIndex)
 	}
@@ -79,8 +98,8 @@ func storeChunks(chunks map[int][]byte, fileID int64) bool {
 	return true
 }
 
-func storeChunkOnNode(nodeAddress string, fileID int64, chunkID int64, chunk []byte) {
-	conn, err := grpc.NewClient(nodeAddress)
+func storeChunkOnNode(nodeAddress string, fileID int64, chunkID int64, chunk []byte) bool {
+	conn, err := grpc.NewClient(nodeAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
@@ -96,9 +115,11 @@ func storeChunkOnNode(nodeAddress string, fileID int64, chunkID int64, chunk []b
 		Chunk:   chunk,
 	})
 	if err != nil {
-		log.Fatalf("Error: %v", err)
+		log.Printf("Error: %v", err)
+		return false
 	}
 	log.Printf(response.Message)
+	return true
 }
 
 func StoreFile(fileBytes []byte, filename string, fileSize int64) (int64, error) {
