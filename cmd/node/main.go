@@ -16,10 +16,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-type ChunkServer struct {
-	pb.UnimplementedChunkServiceServer
-}
-
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -59,7 +55,8 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterChunkServiceServer(grpcServer, &ChunkServer{})
+	chunkServer := &node.ChunkServer{}
+	pb.RegisterChunkServiceServer(grpcServer, chunkServer)
 
 	log.Printf("Node is listening on  port %d", *port)
 	if err := grpcServer.Serve(lis); err != nil {
