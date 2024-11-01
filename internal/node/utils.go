@@ -2,9 +2,26 @@ package node
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/iamkabilan/spread/database"
 )
+
+var baseStoragePath = os.Getenv("BASE_STORAGE_PATH")
+
+func InitNodeFolder(nodeAddress string) error {
+	dir := filepath.Join(baseStoragePath, "file-storage", nodeAddress)
+
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err := os.MkdirAll(dir, os.ModePerm)
+		if err != nil {
+			return err
+		}
+		log.Printf("Node folder intialized %s", dir)
+	}
+	return nil
+}
 
 func CheckIfNodeExists(port int) (bool, string, error) {
 	db := database.GetDB()

@@ -2,13 +2,17 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	pb "github.com/iamkabilan/spread/proto"
 )
 
 type ChunkServer struct {
 	pb.UnimplementedChunkServiceServer
+	Port string
 }
 
 func (s *ChunkServer) StoreChunk(ctx context.Context, req *pb.StoreChunkRequest) (*pb.StoreChunkResponse, error) {
@@ -17,7 +21,7 @@ func (s *ChunkServer) StoreChunk(ctx context.Context, req *pb.StoreChunkRequest)
 	chunk := req.GetChunk()
 
 	log.Printf("Storing chunk id %d for file id %d", chunkID, fileID)
-	err := storeChunkOnDisk(chunkID, fileID, chunk)
+	err := storeChunkOnDisk(s.Port, chunkID, fileID, chunk)
 	if err != nil {
 		return &pb.StoreChunkResponse{
 			Success: false,
@@ -41,7 +45,9 @@ func (s *ChunkServer) GetChunk(ctx context.Context, req *pb.GetChunkRequest) (*p
 	}, nil
 }
 
-func storeChunkOnDisk(chunkID int64, fileID int64, chunk []byte) error {
+func storeChunkOnDisk(nodeAddress string, chunkID int64, fileID int64, chunk []byte) error {
+	baseStoragePath := os.Getenv("BASE_STORAGE_PATH")
 	log.Printf("%d %d %d", chunkID, fileID, len(chunk))
-	return nil
+	filePath := filepath.Join(baseStoragePath, "file-storage", nodeAddress, fmt.Sprintf("file_%d-chunk_%d", fileID, chunkID))
+	return os.WriteFile(filePath, chunk, 0644)
 }
