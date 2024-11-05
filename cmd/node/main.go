@@ -36,6 +36,10 @@ func main() {
 		return
 	}
 
+	if err := node.InitNodeFolder(strconv.Itoa(*port)); err != nil {
+		log.Fatalf("Failed to initialize node folder: %v", err)
+	}
+
 	if !exists {
 		log.Printf("Creating new node on port %d", *port)
 		nodeID = uuid.New().String()
@@ -49,13 +53,16 @@ func main() {
 		node.SendHeartbeat(nodeID)
 	}()
 
-	lis, err := net.Listen("tcp", ":"+strconv.Itoa(*port))
+	nodeAddress := strconv.Itoa(*port)
+	lis, err := net.Listen("tcp", ":"+nodeAddress)
 	if err != nil {
 		log.Fatalf("Failed to listen %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
-	chunkServer := &node.ChunkServer{}
+	chunkServer := &node.ChunkServer{
+		Port: nodeAddress,
+	}
 	pb.RegisterChunkServiceServer(grpcServer, chunkServer)
 
 	log.Printf("Node is listening on  port %d", *port)

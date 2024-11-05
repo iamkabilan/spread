@@ -24,6 +24,27 @@ func SaveFileMetadata(fileMetaData models.File) (int64, error) {
 	return fileId, nil
 }
 
+func FetchFileMetaData(fileID int) (models.File, error) {
+	var file models.File
+	db := database.GetDB()
+	query := "SELECT file_id, file_name, file_size FROM files WHERE file_id = ?"
+	rows, err := db.Query(query, fileID)
+	if err != nil {
+		log.Printf("Error in fetching file metadata %v", err)
+		return file, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(&file.FileId, &file.FileName, &file.FileSize); err != nil {
+			log.Printf("Error in reading rows from file table %v", err)
+			return file, err
+		}
+	}
+
+	return file, nil
+}
+
 func SaveNewNode(nodeID string, port int) bool {
 	db := database.GetDB()
 	query := "INSERT INTO storage_nodes (node_id, port, location, status) VALUES (?, ?, ?, ?)"
