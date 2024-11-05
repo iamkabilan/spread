@@ -10,6 +10,7 @@ func Router() *mux.Router {
 
 	router.HandleFunc("/upload", controller.UploadFile).Methods("POST")
 	router.HandleFunc("/register-node", controller.RegisterNode).Methods("POST")
+	router.HandleFunc("/download/{fileId}", controller.DownloadFile).Methods("GET")
 
 	return router
 }

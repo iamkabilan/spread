@@ -47,7 +47,10 @@ func (s *ChunkServer) GetChunk(ctx context.Context, req *pb.GetChunkRequest) (*p
 
 func storeChunkOnDisk(nodeAddress string, chunkID int64, fileID int64, chunk []byte) error {
 	baseStoragePath := os.Getenv("BASE_STORAGE_PATH")
-	log.Printf("%d %d %d", chunkID, fileID, len(chunk))
 	filePath := filepath.Join(baseStoragePath, "file-storage", nodeAddress, fmt.Sprintf("file_%d-chunk_%d", fileID, chunkID))
 	return os.WriteFile(filePath, chunk, 0644)
 }
+
+// func retrieveChunkFromDisk() ([]byte, error) {
+// 	baseStoragePath := os.Getenv("BASE_STORAGE_PATH")
+// }
