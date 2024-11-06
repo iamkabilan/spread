@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -15,12 +14,16 @@ func DownloadFile(response http.ResponseWriter, request *http.Request) {
 	fileID := variables["fileId"]
 
 	fileIDInt, _ := strconv.Atoi(fileID)
-	file, err := metadata.FetchFileMetaData(fileIDInt)
+	fileMetadata, err := metadata.FetchFileMetaData(fileIDInt)
 	if err != nil {
 		http.Error(response, "Couldn't able to download the file", http.StatusInternalServerError)
 		return
 	}
 
-	log.Print(file)
-	json.NewEncoder(response).Encode(file)
+	if fileMetadata.FileId == 0 || fileMetadata.IsDeleted {
+		http.Error(response, "File not found", http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(response).Encode(fileMetadata)
 }

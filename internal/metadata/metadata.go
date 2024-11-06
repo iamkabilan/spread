@@ -27,7 +27,7 @@ func SaveFileMetadata(fileMetaData models.File) (int64, error) {
 func FetchFileMetaData(fileID int) (models.File, error) {
 	var file models.File
 	db := database.GetDB()
-	query := "SELECT file_id, file_name, file_size FROM files WHERE file_id = ?"
+	query := "SELECT file_id, file_name, file_size, is_deleted FROM files WHERE file_id = ?"
 	rows, err := db.Query(query, fileID)
 	if err != nil {
 		log.Printf("Error in fetching file metadata %v", err)
@@ -36,7 +36,7 @@ func FetchFileMetaData(fileID int) (models.File, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		if err := rows.Scan(&file.FileId, &file.FileName, &file.FileSize); err != nil {
+		if err := rows.Scan(&file.FileId, &file.FileName, &file.FileSize, &file.IsDeleted); err != nil {
 			log.Printf("Error in reading rows from file table %v", err)
 			return file, err
 		}
