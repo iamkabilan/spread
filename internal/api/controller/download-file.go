@@ -1,12 +1,13 @@
 package controller
 
 import (
-	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/iamkabilan/spread/internal/metadata"
+	"github.com/iamkabilan/spread/internal/storage"
 )
 
 func DownloadFile(response http.ResponseWriter, request *http.Request) {
@@ -25,5 +26,12 @@ func DownloadFile(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	json.NewEncoder(response).Encode(fileMetadata)
+	file, err := storage.RetrieveFile(fileMetadata)
+	if err != nil {
+		log.Printf("Error in retrieving the file, %v", err)
+		http.Error(response, "Error in retrieving the file", http.StatusInternalServerError)
+	}
+
+	response.Header().Set("Content-Type", "application/octet-stream")
+	response.Write(file)
 }

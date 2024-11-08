@@ -37,11 +37,19 @@ func (s *ChunkServer) StoreChunk(ctx context.Context, req *pb.StoreChunkRequest)
 
 func (s *ChunkServer) GetChunk(ctx context.Context, req *pb.GetChunkRequest) (*pb.GetChunkResponse, error) {
 	chunkID := req.GetChunkId()
+	fileID := req.GetFileId()
 	log.Printf("%d", chunkID)
 
+	chunk, err := retrieveChunkFromDisk(s.Port, chunkID, fileID)
+	if err != nil {
+		log.Printf("Error in reading file from the storage %v", err)
+		return &pb.GetChunkResponse{
+			Chunk: nil,
+		}, err
+	}
+
 	return &pb.GetChunkResponse{
-		Chunk:  nil,
-		FileId: 1,
+		Chunk: chunk,
 	}, nil
 }
 
@@ -51,6 +59,14 @@ func storeChunkOnDisk(nodeAddress string, chunkID int64, fileID int64, chunk []b
 	return os.WriteFile(filePath, chunk, 0644)
 }
 
-// func retrieveChunkFromDisk() ([]byte, error) {
-// 	baseStoragePath := os.Getenv("BASE_STORAGE_PATH")
-// }
+func retrieveChunkFromDisk(nodeAddress string, chunkID int64, fileID int64) ([]byte, error) {
+	baseStoragePath := os.Getenv("BASE_STORAGE_PATH")
+	filePath := filepath.Join(baseStoragePath, "file-storage", nodeAddress, fmt.Sprintf("file_%d-chunk_%d", fileID, chunkID))
+
+	chunk, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return chunk, nil
+}
