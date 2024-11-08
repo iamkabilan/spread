@@ -25,9 +25,9 @@ message StoreChunkResponse {
 
 message GetChunkRequest {
     int64 chunkId = 1;
+    int64 fileId = 2;
 }
 
 message GetChunkResponse {
     bytes chunk = 1;
-    int64 fileId = 2;
 }
