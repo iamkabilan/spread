@@ -38,7 +38,6 @@ func (s *ChunkServer) StoreChunk(ctx context.Context, req *pb.StoreChunkRequest)
 func (s *ChunkServer) GetChunk(ctx context.Context, req *pb.GetChunkRequest) (*pb.GetChunkResponse, error) {
 	chunkID := req.GetChunkId()
 	fileID := req.GetFileId()
-	log.Printf("%d", chunkID)
 
 	chunk, err := retrieveChunkFromDisk(s.Port, chunkID, fileID)
 	if err != nil {

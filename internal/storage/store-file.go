@@ -63,8 +63,11 @@ func storeChunks(chunks map[int][]byte, fileID int64) bool {
 		chunkSize := len(chunk)
 		chunkHash := calculateChunkHash(chunk)
 
-		query := `INSERT INTO chunks (file_id, chunk_index, chunk_size, chunk_hash) VALUES (?, ?, ?, ?)`
-		result, queryErr := db.Exec(query, fileID, chunkIndex, chunkSize, chunkHash)
+		selectedNode := activeNodes[nodeIndex]
+		nodeIndex = (nodeIndex + 1) % len(activeNodes)
+
+		query := `INSERT INTO chunks (file_id, node_id, chunk_index, chunk_size, chunk_hash) VALUES (?, ?, ?, ?, ?)`
+		result, queryErr := db.Exec(query, fileID, selectedNode.NodeID, chunkIndex, chunkSize, chunkHash)
 		if queryErr != nil {
 			log.Println("ERROR: ", queryErr.Error())
 
@@ -76,9 +79,6 @@ func storeChunks(chunks map[int][]byte, fileID int64) bool {
 		}
 
 		chunkID, _ := result.LastInsertId()
-
-		selectedNode := activeNodes[nodeIndex]
-		nodeIndex = (nodeIndex + 1) % len(activeNodes)
 
 		nodeResult := storeChunkOnNode(":"+strconv.Itoa(selectedNode.Port), fileID, chunkID, chunk)
 		if nodeResult == false {
@@ -122,11 +122,12 @@ func storeChunkOnNode(nodeAddress string, fileID int64, chunkID int64, chunk []b
 	return true
 }
 
-func StoreFile(fileBytes []byte, filename string, fileSize int64) (int64, error) {
+func StoreFile(fileBytes []byte, filename string, fileType string, fileSize int64) (int64, error) {
 	var file models.File
 	file = models.File{
 		UserId:   1,
 		FileName: filename,
+		FileType: fileType,
 		FileSize: fileSize,
 	}
 

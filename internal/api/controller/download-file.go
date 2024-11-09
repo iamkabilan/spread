@@ -32,6 +32,7 @@ func DownloadFile(response http.ResponseWriter, request *http.Request) {
 		http.Error(response, "Error in retrieving the file", http.StatusInternalServerError)
 	}
 
-	response.Header().Set("Content-Type", "application/octet-stream")
+	response.Header().Set("Content-Type", fileMetadata.FileType)
+	response.Header().Set("Content-Disposition", "attachment; filename="+fileMetadata.FileName)
 	response.Write(file)
 }
