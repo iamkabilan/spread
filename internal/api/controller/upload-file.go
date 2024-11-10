@@ -21,6 +21,8 @@ func findContentType(file multipart.File) (string, error) {
 	mimeType := http.DetectContentType(buffer)
 	log.Printf("File type %s", mimeType)
 
+	_, err = file.Seek(0, io.SeekStart)
+
 	return mimeType, nil
 }
 
